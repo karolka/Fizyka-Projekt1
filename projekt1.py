@@ -4,9 +4,6 @@ import sympy
 import math
 from scipy.constants import g
 
-#TODO actually reading from file
-#TODO save to file
-
 def ParseLine(line):
     """ Returns cannon position, target position, velocity vector, wind vector,
     timestamps and string containing function that is defining the terrain.
@@ -109,7 +106,8 @@ def GetEquationOfMotion(v, w, pos0):
     vel_y = v[1] + w[1]
 
     z = sympy.symbols('z', real=True)
-    equation = (vel_y/vel_x) * (z - pos0[0]) - ( g/ (2*(vel_x**2)) ) * (z - pos0[0])**2 + pos0[1]
+    equation = (vel_y/vel_x) * (z - pos0[0]) - ( g/ (2*(vel_x**2)) ) *\
+    (z - pos0[0])**2 + pos0[1]
 
     return equation
 
@@ -123,7 +121,8 @@ def GetYOfMotion(v, w, x, pos0):
     vel_y = v[1] + w[1]
     position = [x - pos0[0], pos0[1]]
 
-    y = (vel_y/vel_x) * position[0] - ( g/ (2*(vel_x**2)) ) * position[0]**2 + position[1]
+    y = (vel_y/vel_x) * position[0] - ( g/ (2*(vel_x**2)) ) *\
+    position[0]**2 + position[1]
 
     return y
 
@@ -148,10 +147,12 @@ def GetImpactPoint(terrain_eq, motion_eq, cannon_position):
 def RunCalculations(pos_0, target, v, w, t, fun_str, out_name):
     # create x values, calculate y values and equations for further calculations
     x_terrain = np.linspace(pos_0[0]-0.03, target[0]+0.03, 10000)
-    y_terrain, terrain_equation = PolyCoefficients(x_terrain, StrToCoefficients(fun_str))
+    y_terrain, terrain_equation = PolyCoefficients(x_terrain, 
+                                                   StrToCoefficients(fun_str))
 
     motion_equation = GetEquationOfMotion(v, w, pos_0)
-    impact_point_x = GetImpactPoint(terrain_equation, motion_equation, pos_0[0])
+    impact_point_x = GetImpactPoint(terrain_equation, 
+                                    motion_equation, pos_0[0])
     x_shot = np.linspace(pos_0[0], impact_point_x, 10000)
     y_shot = GetYOfMotion(v, w, x_shot, pos_0)
 
@@ -222,8 +223,8 @@ def DetermineHit(impact_point, target):
         return 0
 
 def ParseOutput(v_0, w, t, impact_point, target):
-    output_str = "(" + str(impact_point[0]) + ", " \
-    + str(impact_point[1]) + "); "
+    output_str = "(" + str(impact_point[0]) + ", " +\
+    str(impact_point[1]) + "); "
     
     max_height = CalculateMaxHeight(v_0, w)
     
@@ -231,8 +232,8 @@ def ParseOutput(v_0, w, t, impact_point, target):
     
     for i in t:
         v_timestamp = GetVelocityInTime(v_0, w, i)
-        output_str += "[" + str(v_timestamp[0]) + ", " \
-        + str(v_timestamp[1]) + "]; "
+        output_str += "[" + str(v_timestamp[0]) + ", " +\
+        str(v_timestamp[1]) + "]; "
     
     hit = DetermineHit(impact_point, target)
     
@@ -251,10 +252,8 @@ if __name__ == "__main__":
     
                 impact_point = RunCalculations(pos_0, target, v_0, w, t, fun_str, 
                                                plot_output_file_name)
-    
                 i += 1
             
                 output_line = ParseOutput(v_0, w, t, impact_point, target)
-                
                 file_output.write(output_line)
     
