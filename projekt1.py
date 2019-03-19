@@ -145,6 +145,9 @@ def GetImpactPoint(terrain_eq, motion_eq, cannon_position):
     return float(coordinates[0])
 
 def RunCalculations(pos_0, target, v, w, t, fun_str, out_name):
+    """ Calculates everything that's necessary to plot all the plots,
+    returns coordinates of the impact point
+    """
     # create x values, calculate y values and equations for further calculations
     x_terrain = np.linspace(pos_0[0]-0.03, target[0]+0.03, 10000)
     y_terrain, terrain_equation = PolyCoefficients(x_terrain, 
@@ -202,18 +205,27 @@ def RunCalculations(pos_0, target, v, w, t, fun_str, out_name):
     return [impact_point_x, motion_equation.subs(z, impact_point_x)]
 
 def CalculateMaxHeight(v_0, w):
+    """ Calculate and return maximum reached height
+    """
     max_height = (v_0[1] + w[1])**2 / (2*g)
     return max_height
 
 def CalculateYVelocityInTime(v_y0, timestamp):
+    """ Calculate and return Y velocity at a given moment in time
+    """
     v = v_y0 - timestamp*g
     return v
 
 def GetVelocityInTime(v_0, w, timestamp):
+    """ Calculate and return velocity vector at a given moment in time
+    """
     v = [v_0[0] + w[0], CalculateYVelocityInTime(v_0[1], timestamp)]
     return v;
 
 def DetermineHit(impact_point, target):
+    """ Determine wheter the target has been hit or not.
+    Returns 1 if yes, 0 if not
+    """
     distance = math.hypot(target[0] - impact_point[0], 
                           target[1] - impact_point[1])
     
@@ -223,6 +235,8 @@ def DetermineHit(impact_point, target):
         return 0
 
 def ParseOutput(v_0, w, t, impact_point, target):
+    """ Prepare and return the perfect line for output file
+    """
     output_str = "(" + str(impact_point[0]) + ", " +\
     str(impact_point[1]) + "); "
     
