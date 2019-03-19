@@ -1,16 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sympy
+import math
 from scipy.constants import g
 
 #TODO actually reading from file
 #TODO save to file
-line = "(-1.00, 0.00); (1.00, 0.40); [1.40, 4.16]; [1.00, 0.00]; 0.20; 0.41; 1.20; 0.3x^4 + 0.2x^3 - 0.3x^2 + 0.2"
 
 def ParseLine(line):
     """ Returns cannon position, target position, velocity vector, wind vector,
     timestamps and string containing function that is defining the terrain.
     """
+    line = line[:-1]
     line = line.split("; ")
     
     pos_0_str = line[0][1:-1]
@@ -144,9 +145,7 @@ def GetImpactPoint(terrain_eq, motion_eq, cannon_position):
 
     return float(coordinates[0])
 
-if __name__ == "__main__":
-    pos_0, target, v, w, t, fun_str = ParseLine(line)
-    
+def RunCalculations(pos_0, target, v, w, t, fun_str, out_name):
     # create x values, calculate y values and equations for further calculations
     x_terrain = np.linspace(pos_0[0]-0.03, target[0]+0.03, 10000)
     y_terrain, terrain_equation = PolyCoefficients(x_terrain, StrToCoefficients(fun_str))
@@ -188,9 +187,74 @@ if __name__ == "__main__":
     # restrict the area included
     plt.ylim(bottom=0)
     plt.xlim(pos_0[0]-0.03, target[0]+0.03)
-    
+
+    # show the legend
     ax = plt.gca()
     ax.legend()
 
+    # save the masterpiece
+    plt.savefig(out_name)
+
     # show the masterpiece
     plt.show()
+    
+    return [impact_point_x, motion_equation.subs(z, impact_point_x)]
+
+def CalculateMaxHeight(v_0, w):
+    max_height = (v_0[1] + w[1])**2 / (2*g)
+    return max_height
+
+def CalculateYVelocityInTime(v_y0, timestamp):
+    v = v_y0 - timestamp*g
+    return v
+
+def GetVelocityInTime(v_0, w, timestamp):
+    v = [v_0[0] + w[0], CalculateYVelocityInTime(v_0[1], timestamp)]
+    return v;
+
+def DetermineHit(impact_point, target):
+    distance = math.hypot(target[0] - impact_point[0], 
+                          target[1] - impact_point[1])
+    
+    if distance <= 0.05:
+        return 1
+    else:
+        return 0
+
+def ParseOutput(v_0, w, t, impact_point, target):
+    output_str = "(" + str(impact_point[0]) + ", " \
+    + str(impact_point[1]) + "); "
+    
+    max_height = CalculateMaxHeight(v_0, w)
+    
+    output_str += str(max_height) + "; "
+    
+    for i in t:
+        v_timestamp = GetVelocityInTime(v_0, w, i)
+        output_str += "[" + str(v_timestamp[0]) + ", " \
+        + str(v_timestamp[1]) + "]; "
+    
+    hit = DetermineHit(impact_point, target)
+    
+    output_str += str(hit) + "\n"
+    
+    return output_str
+
+if __name__ == "__main__":
+    with open("input.txt", "r") as file_input:
+        with open("output.txt", "a+") as file_output:
+            i = 1
+            for line in file_input:
+                plot_output_file_name = str(i) + ".png"
+    
+                pos_0, target, v_0, w, t, fun_str = ParseLine(line)
+    
+                impact_point = RunCalculations(pos_0, target, v_0, w, t, fun_str, 
+                                               plot_output_file_name)
+    
+                i += 1
+            
+                output_line = ParseOutput(v_0, w, t, impact_point, target)
+                
+                file_output.write(output_line)
+    
